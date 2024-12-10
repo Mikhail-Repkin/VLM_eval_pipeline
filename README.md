@@ -1,1 +1,1 @@
-# ozon_bank_eval_pipeline
+# VLM_eval_pipeline
