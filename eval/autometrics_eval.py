@@ -8,6 +8,9 @@ class TextEvaluator:
     """Оценка качества сгенерированного текста через автометрики."""
     def __init__(self, bleurt_checkpoint: str = "./BLEURT-20"):
         """
+        https://github.com/google-research/bleurt.git
+        https://storage.googleapis.com/bleurt-oss-21/BLEURT-20.zip
+
         :param bleurt_checkpoint: Путь к модели BLEURT ('./bleurt-20').
         """
         self.bleurt_checkpoint = bleurt_checkpoint

@@ -6,6 +6,8 @@ from tqdm import tqdm
 import pandas as pd
 
 
+# Примечание: в gpt перезапись системного промта ухудшает качество генерации,
+# поэтому DEFAULT_SYSTEM_MESSAGE подавался в модель под ролью пользователя.
 class GPT4DescriptionGenerator:
     """Класс для генерации описания/ответов по изображению с помощью GPT-4."""
     def __init__(self, model_name, gpt4_api_key, system_prompt, user_prompt):
