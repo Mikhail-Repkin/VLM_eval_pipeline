@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 from tqdm import tqdm
 
 import pandas as pd
