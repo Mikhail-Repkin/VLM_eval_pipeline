@@ -78,7 +78,6 @@ class GPT4DescriptionGenerator:
         for img_name, image_url in image_urls.items():
 
             for temperature in temperatures:
-                generation_times = []
                 text_lengths = []
                 char_speeds = []
 
@@ -109,7 +108,6 @@ class GPT4DescriptionGenerator:
                         else 0
                     )
 
-                    generation_times.append(time_taken)
                     text_lengths.append(text_length)
                     char_speeds.append(char_speed)
 
@@ -118,9 +116,6 @@ class GPT4DescriptionGenerator:
                             "Image": img_name,
                             "Temperature": temperature,
                             "Generated Text": description,
-                            "Time Taken (sec)": time_taken,
-                            "Text Length (char)": text_length,
-                            "Chars/sec": char_speed,
                         }
                     )
 

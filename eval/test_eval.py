@@ -114,7 +114,6 @@ class ImageDescriptionGenerator:
                 img = image_path
 
             for temperature in temperatures:
-                generation_times = []
                 text_lengths = []
                 char_speeds = []
 
@@ -139,7 +138,6 @@ class ImageDescriptionGenerator:
                     # Скорость генерации в символах в секунду
                     char_speed = round(text_length / time_taken, 1)
 
-                    generation_times.append(time_taken)
                     text_lengths.append(text_length)
                     char_speeds.append(char_speed)
 
