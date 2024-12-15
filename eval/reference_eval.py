@@ -78,9 +78,6 @@ class GPT4DescriptionGenerator:
         for img_name, image_url in image_urls.items():
 
             for temperature in temperatures:
-                text_lengths = []
-                char_speeds = []
-
                 print(
                     f"\nГенерация {num_variants} вариантов для изображения: "
                     f"{image_url}, "
@@ -89,27 +86,9 @@ class GPT4DescriptionGenerator:
                 for _ in tqdm(
                     range(num_variants), desc="Обработка варианта", leave=True
                 ):
-                    start_time = time.time()
                     description = self.generate_description(image_url,
                                                             temperature)
-                    end_time = time.time()
-
                     print(description)
-
-                    # Расчет времени генерации
-                    time_taken = round(end_time - start_time, 1)
-
-                    # Длина текста
-                    text_length = len(description)
-
-                    # Скорость генерации в символах в секунду
-                    char_speed = (
-                        round(text_length / time_taken, 1) if time_taken > 0
-                        else 0
-                    )
-
-                    text_lengths.append(text_length)
-                    char_speeds.append(char_speed)
 
                     results.append(
                         {
