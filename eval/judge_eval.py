@@ -149,7 +149,7 @@ class ModelComparisonJudge:
                                     "Explanation"
                                     ],
                             }
-                            return final_result
+                        return final_result
                     except ValueError as e:
                         print(f"Parsing error on attempt {retry_count + 1}: "
                               f"{e}")
