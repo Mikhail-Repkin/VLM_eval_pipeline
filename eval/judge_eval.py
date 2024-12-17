@@ -41,12 +41,13 @@ class ModelComparisonJudge:
         except Exception as e:
             raise ValueError(f"Failed to parse LLM response: {e}")
 
-    def judge_responses(self, image_url, answer_A, answer_B):
+    def judge_responses(self, image_url, answer_A, answer_B, max_retries=3):
         """Метод для судейской оценки двух ответов.
         Params:
         - image_url: путь к изображению
         - answer_A: ответ эталонной модели
         - answer_B: ответ тестируемой модели
+        - max_retries: макс. количество повторов
 
         Returns:
         {
@@ -101,40 +102,49 @@ class ModelComparisonJudge:
             "useWalletBalance": True,
         }
 
-        response = requests.post(
-            self.url,
-            headers=headers,
-            data=json.dumps(data),
-        )
-        if response.status_code == 200:
-            resp = response.json()
-            print("Total Cost:", resp["usage"]["total_cost"])
-            print("Total Tokens:", resp["usage"]["total_tokens"])
+        retry_count = 0
 
-            result = resp["choices"][0]["message"]["content"]
-            parsed_result = self.parse_llm_response(result)
-            print("result:", result)
-            print("result:", parsed_result)
-        else:
-            raise Exception(
-                f"Request failed with status code {response.status_code}: "
-                f"{response.text}"
+        while retry_count < max_retries:
+
+            response = requests.post(
+                self.url,
+                headers=headers,
+                data=json.dumps(data),
             )
+            if response.status_code == 200:
+                resp = response.json()
+                print("Total Cost:", resp["usage"]["total_cost"])
+                print("Total Tokens:", resp["usage"]["total_tokens"])
 
-        # Идентифицируем расположение ответов
-        if answers[0] == answer_A:
-            # первая модель (А) - эталон, 2я (B) - кандидат
-            final_result = {
-                "Reference_score": parsed_result["ModelA_score"],
-                "Candidate_score": parsed_result["ModelB_score"],
-                "Explanation": parsed_result["Explanation"],
-            }
-        else:
-            # первая модель (А) - кандидат, 2я (B) - эталон
-            final_result = {
-                "Reference_score": parsed_result["ModelB_score"],
-                "Candidate_score": parsed_result["ModelA_score"],
-                "Explanation": parsed_result["Explanation"],
-            }
+                try:
+                    result = resp["choices"][0]["message"]["content"]
+                    parsed_result = self.parse_llm_response(result)
+                    print("result:", result)
+                    print("result:", parsed_result)
 
-        return final_result
+                    # Идентифицируем расположение ответов
+                    if answers[0] == answer_A:
+                        # первая модель (А) - эталон, 2я (B) - кандидат
+                        final_result = {
+                            "Reference_score": parsed_result["ModelA_score"],
+                            "Candidate_score": parsed_result["ModelB_score"],
+                            "Explanation": parsed_result["Explanation"],
+                        }
+                    else:
+                        # первая модель (А) - кандидат, 2я (B) - эталон
+                        final_result = {
+                            "Reference_score": parsed_result["ModelB_score"],
+                            "Candidate_score": parsed_result["ModelA_score"],
+                            "Explanation": parsed_result["Explanation"],
+                        }
+                        return final_result
+
+                except ValueError as e:
+                    print(f"Parsing error on attempt {retry_count + 1}: {e}")
+                    retry_count += 1
+            else:
+                raise Exception(
+                    f"Request failed with status code {response.status_code}: "
+                    f"{response.text}"
+                )
+        raise Exception("Failed to parse LLM response after multiple retries.")
