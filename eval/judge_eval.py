@@ -5,6 +5,7 @@ import requests
 
 class ModelComparisonJudge:
     """Класс для судейской оценки ответов от двух моделей."""
+
     def __init__(
         self,
         model,
@@ -17,9 +18,7 @@ class ModelComparisonJudge:
         self.url = url
 
         if not gpt4_api_key:
-            raise ValueError(
-                "API key not found."
-            )
+            raise ValueError("API key not found.")
 
         self.api_key = gpt4_api_key
         self.system_prompt = system_msg
@@ -110,7 +109,7 @@ class ModelComparisonJudge:
                     self.url,
                     headers=headers,
                     data=json.dumps(data),
-                    timeout=30,
+                    timeout=None,
                 )
                 if response.status_code == 200:
                     resp = response.json()
@@ -127,20 +126,33 @@ class ModelComparisonJudge:
                         if answers[0] == answer_A:
                             # первая модель (А) - эталон, 2я (B) - кандидат
                             final_result = {
-                                "Reference_score": parsed_result["ModelA_score"],
-                                "Candidate_score": parsed_result["ModelB_score"],
-                                "Explanation": parsed_result["Explanation"],
+                                "Reference_score": parsed_result[
+                                    "ModelA_score"
+                                    ],
+                                "Candidate_score": parsed_result[
+                                    "ModelB_score"
+                                    ],
+                                "Explanation": parsed_result[
+                                    "Explanation"
+                                    ],
                             }
                         else:
                             # первая модель (А) - кандидат, 2я (B) - эталон
                             final_result = {
-                                "Reference_score": parsed_result["ModelB_score"],
-                                "Candidate_score": parsed_result["ModelA_score"],
-                                "Explanation": parsed_result["Explanation"],
+                                "Reference_score": parsed_result[
+                                    "ModelB_score"
+                                    ],
+                                "Candidate_score": parsed_result[
+                                    "ModelA_score"
+                                    ],
+                                "Explanation": parsed_result[
+                                    "Explanation"
+                                    ],
                             }
                             return final_result
                     except ValueError as e:
-                        print(f"Parsing error on attempt {retry_count + 1}: {e}")
+                        print(f"Parsing error on attempt {retry_count + 1}: "
+                              f"{e}")
                         retry_count += 1
             except requests.exceptions.Timeout:
                 print("Timeout error occurred, retrying...")
