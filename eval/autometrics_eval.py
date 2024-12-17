@@ -1,23 +1,25 @@
-from bleurt import score
 from tqdm import tqdm
+from bleurt import score
+from multi_lingual_rouge_score import multi_lingual_rouge
 
 import pandas as pd
 
 
 class TextEvaluator:
     """Оценка качества сгенерированного текста через автометрики."""
+
     def __init__(self, bleurt_checkpoint: str = "./BLEURT-20"):
         """
         https://github.com/google-research/bleurt.git
         https://storage.googleapis.com/bleurt-oss-21/BLEURT-20.zip
+        https://github.com/faisaltareque/Multilingual-Rouge-Scorer
 
         :param bleurt_checkpoint: Путь к модели BLEURT ('./bleurt-20').
         """
         self.bleurt_checkpoint = bleurt_checkpoint
-        # self.rouge_scorer = rouge_scorer.RougeScorer(['rouge1',
-        #                                               'rouge2',
-        #                                               'rougeL'
-        #                                               ], use_stemmer=False)
+        self.rouge_scorer = multi_lingual_rouge.RougeScorer(
+            ["rouge1", "rouge2", "rougeL"], use_stemmer=True
+        )
         self.bleurt_scorer = score.BleurtScorer(self.bleurt_checkpoint)
 
     def eval_autometrics(self, candidate: str, reference: str) -> dict:
@@ -30,8 +32,8 @@ class TextEvaluator:
 
         :return: dict с оценками.
         """
-        # # Вычисление метрик ROUGE
-        # rouge_scores = self.rouge_scorer.score(reference, candidate)
+        # Вычисление метрик ROUGE
+        rouge_scores = self.rouge_scorer.score(reference, candidate)
 
         # Вычисление метрики BLEURT
         bleurt_result = self.bleurt_scorer.score(
@@ -39,9 +41,9 @@ class TextEvaluator:
         )[0]
 
         return {
-            # "rouge1": rouge_scores['rouge1'].fmeasure,
-            # "rouge2": rouge_scores['rouge2'].fmeasure,
-            # "rougeL": rouge_scores['rougeL'].fmeasure,
+            "rouge1": rouge_scores['rouge1'].fmeasure,
+            "rouge2": rouge_scores['rouge2'].fmeasure,
+            "rougeL": rouge_scores['rougeL'].fmeasure,
             "bleurt": bleurt_result
         }
 
