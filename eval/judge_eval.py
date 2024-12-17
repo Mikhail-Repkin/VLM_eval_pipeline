@@ -105,46 +105,47 @@ class ModelComparisonJudge:
         retry_count = 0
 
         while retry_count < max_retries:
-
-            response = requests.post(
-                self.url,
-                headers=headers,
-                data=json.dumps(data),
-            )
-            if response.status_code == 200:
-                resp = response.json()
-                print("Total Cost:", resp["usage"]["total_cost"])
-                print("Total Tokens:", resp["usage"]["total_tokens"])
-
-                try:
-                    result = resp["choices"][0]["message"]["content"]
-                    parsed_result = self.parse_llm_response(result)
-                    print("result:", result)
-                    print("result:", parsed_result)
-
-                    # Идентифицируем расположение ответов
-                    if answers[0] == answer_A:
-                        # первая модель (А) - эталон, 2я (B) - кандидат
-                        final_result = {
-                            "Reference_score": parsed_result["ModelA_score"],
-                            "Candidate_score": parsed_result["ModelB_score"],
-                            "Explanation": parsed_result["Explanation"],
-                        }
-                    else:
-                        # первая модель (А) - кандидат, 2я (B) - эталон
-                        final_result = {
-                            "Reference_score": parsed_result["ModelB_score"],
-                            "Candidate_score": parsed_result["ModelA_score"],
-                            "Explanation": parsed_result["Explanation"],
-                        }
-                        return final_result
-
-                except ValueError as e:
-                    print(f"Parsing error on attempt {retry_count + 1}: {e}")
-                    retry_count += 1
-            else:
-                raise Exception(
-                    f"Request failed with status code {response.status_code}: "
-                    f"{response.text}"
+            try:
+                response = requests.post(
+                    self.url,
+                    headers=headers,
+                    data=json.dumps(data),
+                    timeout=30,
                 )
+                if response.status_code == 200:
+                    resp = response.json()
+                    print("Total Cost:", resp["usage"]["total_cost"])
+                    print("Total Tokens:", resp["usage"]["total_tokens"])
+
+                    try:
+                        result = resp["choices"][0]["message"]["content"]
+                        parsed_result = self.parse_llm_response(result)
+                        print("result:", result)
+                        print("result:", parsed_result)
+
+                        # Идентифицируем расположение ответов
+                        if answers[0] == answer_A:
+                            # первая модель (А) - эталон, 2я (B) - кандидат
+                            final_result = {
+                                "Reference_score": parsed_result["ModelA_score"],
+                                "Candidate_score": parsed_result["ModelB_score"],
+                                "Explanation": parsed_result["Explanation"],
+                            }
+                        else:
+                            # первая модель (А) - кандидат, 2я (B) - эталон
+                            final_result = {
+                                "Reference_score": parsed_result["ModelB_score"],
+                                "Candidate_score": parsed_result["ModelA_score"],
+                                "Explanation": parsed_result["Explanation"],
+                            }
+                            return final_result
+                    except ValueError as e:
+                        print(f"Parsing error on attempt {retry_count + 1}: {e}")
+                        retry_count += 1
+            except requests.exceptions.Timeout:
+                print("Timeout error occurred, retrying...")
+                retry_count += 1
+            except Exception as e:
+                raise Exception(f"Request failed: {e}")
+
         raise Exception("Failed to parse LLM response after multiple retries.")
