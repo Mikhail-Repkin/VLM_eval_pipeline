@@ -70,7 +70,7 @@
 
 ## Model Inference
 
-Тест-мод разворачивается с помощью фреймворка vLLM раз как сервер, реализующий протокол OpenAI API. По умолчанию сервер запускается по адресу http://localhost:8000.
+Тест-модель разворачивается с помощью фреймворка vLLM раз как сервер, реализующий протокол OpenAI API. По умолчанию сервер запускается по адресу http://localhost:8000.
 
 Сервер использует предопределенный [шаблон чата](https://github.com/vllm-project/vllm/blob/main/docs/source/serving/openai_compatible_server.md#chat-template), хранящийся в токенизаторе.
 
