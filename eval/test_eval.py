@@ -221,64 +221,63 @@ class VQAGenerator:
 
         results = []
 
-        for _ in tqdm(range(len(data)), desc="Обработка изображения", leave=True):
-            for line in data:
-                # Извлекаем данные объекта
-                name = line["File_name"]
-                question = line["Question"]
-                answer = line["Answer"]
-                url = line["url"]
-                device = line["device"]
+        for line in tqdm(data, desc="Обработка вопроса", leave=True):
+            # Извлекаем данные объекта
+            name = line["File_name"]
+            question = line["Question"]
+            answer = line["Answer"]
+            url = line["url"]
+            device = line["device"]
 
-                if base64 is True:
-                    image_base64 = self.encode_base64_content_from_file(url)
-                    img = f"data:image/jpeg;base64,{image_base64}"
-                else:
-                    img = url
+            if base64 is True:
+                image_base64 = self.encode_base64_content_from_file(url)
+                img = f"data:image/jpeg;base64,{image_base64}"
+            else:
+                img = url
 
-                for temperature in temperatures:
-                    text_lengths = []
-                    char_speeds = []
+            for temperature in temperatures:
+                text_lengths = []
+                char_speeds = []
 
-                    print(
-                        f"\nГенерация {num_variants} вариантов для изображения: "
-                        f"{img}, температура: {temperature}"
+                print(
+                    f"\nГенерация {num_variants} вариантов для изображения: "
+                    f"{img}, температура: {temperature}"
+                )
+                for _ in tqdm(
+                    range(num_variants), desc="Обработка варианта", leave=True
+                ):
+                    start_time = time.time()
+                    description = self.generate_description(
+                        system_prompt, question, img, temperature
                     )
-                    for _ in tqdm(
-                        range(num_variants), desc="Обработка варианта", leave=True
-                    ):
-                        start_time = time.time()
-                        description = self.generate_description(
-                            system_prompt, question, img, temperature
-                        )
-                        end_time = time.time()
-                        print(description)
+                    end_time = time.time()
+                    print(description)
 
-                        # Расчет времени генерации
-                        time_taken = round(end_time - start_time, 1)
+                    # Расчет времени генерации
+                    time_taken = round(end_time - start_time, 1)
 
-                        # Длина текста в символах
-                        text_length = len(description)
+                    # Длина текста в символах
+                    text_length = len(description)
 
-                        # Скорость генерации в символах в секунду
-                        char_speed = round(text_length / time_taken, 1)
+                    # Скорость генерации в символах в секунду
+                    char_speed = round(text_length / time_taken, 1)
 
-                        text_lengths.append(text_length)
-                        char_speeds.append(char_speed)
+                    text_lengths.append(text_length)
+                    char_speeds.append(char_speed)
 
-                        results.append(
-                            {
-                                "Image": name,
-                                "Question": question,
-                                "Answer": answer,
-                                "Device": device,
-                                "Temperature": temperature,
-                                "Generated Text": description,
-                                "Time Taken (sec)": time_taken,
-                                "Text Length (char)": text_length,
-                                "Chars/sec": char_speed,
-                            }
-                        )
+                    results.append(
+                        {
+                            "Image": name,
+                            "Question": question,
+                            "Answer": answer,
+                            "Device": device,
+                            "Temperature": temperature,
+                            "Generated Text": description,
+                            "Time Taken (sec)": time_taken,
+                            "Text Length (char)": text_length,
+                            "Chars/sec": char_speed,
+                        }
+                    )
 
         # Преобразовать результаты в DataFrame
         results_df = pd.DataFrame(results)
