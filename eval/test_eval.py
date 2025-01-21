@@ -180,24 +180,30 @@ class VQAGenerator:
         temperature: int
     ):
         """Генерирует описание изображения для заданной температуры."""
-        chat_completion = self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": system_prompt},
-                        {"type": "text", "text": user_prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": image_url},
-                        },
-                    ],
-                },
-            ],
-            model=self.model_name,
-            temperature=temperature,
-        )
-        return chat_completion.choices[0].message.content
+        try:
+            chat_completion = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": system_prompt},
+                            {"type": "text", "text": user_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": image_url},
+                            },
+                        ],
+                    },
+                ],
+                model=self.model_name,
+                temperature=temperature,
+                timeout=10  # Устанавливаем таймаут ответ модели
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            # Любая ошибка приведёт к возврату пустой строки
+            print("Отказ генерации", e)
+            return ""
 
     def generate_descriptions_for_images(
         self,
