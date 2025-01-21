@@ -11,13 +11,9 @@ import pandas as pd
 
 class ImageDescriptionGenerator:
     """Запуск модели через vllm и генерация ответа."""
+
     def __init__(
-        self,
-        model_name,
-        system_prompt,
-        user_prompt,
-        port=8000,
-        log_file="vllm.log"
+        self, model_name, system_prompt, user_prompt, port=8000, log_file="vllm.log"
     ):
         self.model_name = model_name
         self.port = port
@@ -161,3 +157,130 @@ class ImageDescriptionGenerator:
         """Перезапускаем сеанс."""
         print("Перезагрузка сеанса для полной очистки ресурсов...")
         os.system("kill -9 -1")
+
+
+class VQAGenerator:
+    """Генерация ответа по картинке и вопросу."""
+
+    def __init__(self, model_name, port=8000, log_file="vllm.log"):
+        self.model_name = model_name
+        self.client = OpenAI(api_key="EMPTY", base_url=f"http://localhost:{port}/v1")
+
+    @staticmethod
+    def encode_base64_content_from_file(file_path):
+        """Кодирует содержимое файла в base64."""
+        with open(file_path, "rb") as file:
+            return base64.b64encode(file.read()).decode("utf-8")
+
+    def generate_description(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        image_url: str,
+        temperature: int
+    ):
+        """Генерирует описание изображения для заданной температуры."""
+        chat_completion = self.client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": system_prompt},
+                        {"type": "text", "text": user_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_url},
+                        },
+                    ],
+                },
+            ],
+            model=self.model_name,
+            temperature=temperature,
+        )
+        return chat_completion.choices[0].message.content
+
+    def generate_descriptions_for_images(
+        self,
+        data: list[dict],
+        temperatures: list,
+        system_prompt: str,
+        base64: bool = False,
+        num_variants: int = 5,
+    ):
+        """
+        Генерирует описания для нескольких изображений с разными температурами.
+
+        data:
+             {'File_name': '18-01-05.jpg',
+              'Question': 'Какие действия предпринять, если я случайно ввел не тот номер телефона?',
+              'Answer': 'Вы можете удалить введенный номер, нажав на символ "крестика" в текстовом поле, и ввести правильный номер мобильного телефона.',
+              'url': 'https://raw.githubusercontent.com/Mikhail-Repkin/VLM_eval_pipeline/refs/heads/main/open_test_dataset_VQA/phone/18-01-05.jpg',
+              'device': 'phone'}
+        """
+        print("Генерируем описания изображений")
+
+        results = []
+
+        for _ in tqdm(range(len(data)), desc="Обработка изображения", leave=True):
+            for line in data:
+                # Извлекаем данные объекта
+                name = line["File_name"]
+                question = line["Question"]
+                answer = line["Answer"]
+                url = line["url"]
+                device = line["device"]
+
+                if base64 is True:
+                    image_base64 = self.encode_base64_content_from_file(url)
+                    img = f"data:image/jpeg;base64,{image_base64}"
+                else:
+                    img = url
+
+                for temperature in temperatures:
+                    text_lengths = []
+                    char_speeds = []
+
+                    print(
+                        f"\nГенерация {num_variants} вариантов для изображения: "
+                        f"{img}, температура: {temperature}"
+                    )
+                    for _ in tqdm(
+                        range(num_variants), desc="Обработка варианта", leave=True
+                    ):
+                        start_time = time.time()
+                        description = self.generate_description(
+                            system_prompt, question, img, temperature
+                        )
+                        end_time = time.time()
+                        print(description)
+
+                        # Расчет времени генерации
+                        time_taken = round(end_time - start_time, 1)
+
+                        # Длина текста в символах
+                        text_length = len(description)
+
+                        # Скорость генерации в символах в секунду
+                        char_speed = round(text_length / time_taken, 1)
+
+                        text_lengths.append(text_length)
+                        char_speeds.append(char_speed)
+
+                        results.append(
+                            {
+                                "Image": name,
+                                "Question": question,
+                                "Answer": answer,
+                                "Device": device,
+                                "Temperature": temperature,
+                                "Generated Text": description,
+                                "Time Taken (sec)": time_taken,
+                                "Text Length (char)": text_length,
+                                "Chars/sec": char_speed,
+                            }
+                        )
+
+        # Преобразовать результаты в DataFrame
+        results_df = pd.DataFrame(results)
+
+        return results_df
