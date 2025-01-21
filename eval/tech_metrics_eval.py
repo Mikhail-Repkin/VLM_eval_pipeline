@@ -104,8 +104,14 @@ def calculate_perplexity_for_texts(texts):
 
     data = []
     for text in tqdm(texts, desc="Вычисление перплексии", unit="текст"):
+        if not text.strip():
+            # Если текст пустой, записываем перплексию = 0
+            data.append({"Text": text, "Perplexity": 0.0})
+            continue
+
         encodings = tokenizer(text, return_tensors="pt")
         input_ids = encodings.input_ids
+
         with torch.no_grad():
             outputs = model(input_ids, labels=input_ids)
             loss = outputs.loss
