@@ -106,7 +106,7 @@ def calculate_perplexity_for_texts(texts):
     for text in tqdm(texts, desc="Вычисление перплексии", unit="текст"):
         if not text.strip():
             # Если текст пустой, записываем перплексию = 0
-            data.append({"Text": text, "Perplexity": 0.0})
+            data.append({"Perplexity": 0.0})
             continue
 
         encodings = tokenizer(text, return_tensors="pt")
