@@ -217,7 +217,6 @@ class VQAModelJudge:
         Returns:
         {
             "Candidate_score": int,
-            "Candidate_hallucination": int,
             "Explanation": str
         }
 
@@ -288,9 +287,6 @@ class VQAModelJudge:
 
                         final_result = {
                             "Candidate_score": parsed_result["Candidate_score"],
-                            "Candidate_hallucination": parsed_result[
-                                "Candidate_hallucination"
-                            ],
                             "Explanation": parsed_result["Explanation"],
                         }
 
