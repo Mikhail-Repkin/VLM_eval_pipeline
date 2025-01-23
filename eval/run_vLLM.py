@@ -6,7 +6,7 @@ from openai import OpenAI
 
 
 class RunVLLM:
-    """Запуск модели через vllm и генерация ответа."""
+    """Запуск сервера vllm."""
 
     def __init__(self, model_name, port=8000, log_file="vllm.log"):
         self.model_name = model_name
